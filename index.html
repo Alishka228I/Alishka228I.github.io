@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alishka228I</title>
+
+<style>
+body{
+margin:0;
+background:#0a0a0f;
+font-family:Arial,sans-serif;
+color:white;
+overflow:hidden;
+}
+
+#loader{
+position:fixed;
+inset:0;
+background:#05050a;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
+transition:1s;
+}
+
+.loader-content{text-align:center}
+
+.loader-logo{
+width:120px;
+height:120px;
+border-radius:50%;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:48px;
+font-weight:bold;
+margin:auto;
+background:linear-gradient(135deg,#7c6fdb,#e879a0);
+animation:pulse 3s infinite;
+}
+
+.loader-text{
+margin-top:20px;
+margin-bottom:25px;
+letter-spacing:3px;
+color:#aaa;
+}
+
+#enterBtn{
+padding:14px 30px;
+border:none;
+border-radius:999px;
+background:linear-gradient(135deg,#7c6fdb,#e879a0);
+color:white;
+cursor:pointer;
+font-size:16px;
+}
+
+.main{
+opacity:0;
+filter:blur(0);
+transition:1s;
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+body.loaded .main{
+opacity:1;
+filter:blur(0);
+}
+
+body.loaded #loader{
+opacity:0;
+pointer-events:none;
+}
+
+.card{
+width:340px;
+padding:30px;
+border-radius:24px;
+background:#111118;
+text-align:center;
+}
+
+.vinyl{
+width:140px;
+height:140px;
+border-radius:50%;
+margin:auto;
+background:conic-gradient(#1a1a2e,#2d1e52,#1a1a2e);
+animation:none;
+}
+
+.vinyl.spinning{
+animation:spin 3s linear infinite;
+}
+
+button{
+margin-top:20px;
+padding:12px 22px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+}
+
+@keyframes spin{
+from{transform:rotate(0deg)}
+to{transform:rotate(360deg)}
+}
+
+@keyframes pulse{
+0%,100%{transform:scale(1)}
+50%{transform:scale(1)}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-content">
+    <div class="loader-logo">A</div>
+    <div class="loader-text">ENTERING DIGITAL SPACE...</div>
+    <button id="enterBtn">ENTER</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="card">
+    <h1>Dracula</h1>
+    <p>Tame Impala</p>
+
+    <div class="vinyl" id="vinyl"></div>
+
+    <button id="playBtn">▶ PLAY</button>
+  </div>
+</div>
+
+<audio id="audioPlayer">
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const audio = document.getElementById('audioPlayer');
+const vinyl = document.getElementById('vinyl');
+const playBtn = document.getElementById('playBtn');
+const enterBtn = document.getElementById('enterBtn');
+
+playBtn.onclick = () => {
+  if(audio.paused){
+    audio.play();
+    vinyl.classList.add('spinning');
+    playBtn.textContent = '⏸ PAUSE';
+  } else {
+    audio.pause();
+    vinyl.classList.remove('spinning');
+    playBtn.textContent = '▶ PLAY';
+  }
+};
+
+enterBtn.onclick = async () => {
+  document.body.classList.add('loaded');
+
+  try{
+    audio.volume = 0;
+    await audio.play();
+
+    vinyl.classList.add('spinning');
+    playBtn.textContent = '⏸ PAUSE';
+
+    let vol = 0;
+
+    const fade = setInterval(() => {
+      vol += 0.05;
+
+      if(vol >= 1){
+        vol = 1;
+        clearInterval(fade);
+      }
+
+      audio.volume = vol;
+    },120);
+
+  }catch(e){
+    console.log(e);
+  }
+};
+</script>
+
+</body>
+</html>
