@@ -322,7 +322,7 @@
         </div>
         <div class="prog-wrap" id="progWrap">
           <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
-          <div class="time-row"><span id="curTime">0:00</span><span>3:48</span></div>
+          <div class="time-row"><span id="curTime">0:00</span><span id="durTime">0:00</span></div>
         </div>
         <div class="controls">
           <button class="ctrl-btn" id="btnPrev">⏮</button>
@@ -414,6 +414,10 @@
 </div>
 <div class="swipe-hint" id="hint">swipe ← → to navigate</div>
 
+<audio id="audioPlayer" preload="metadata">
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+
 <script>
   const pagesEl = document.getElementById('pages');
   const TOTAL = 4;
@@ -468,38 +472,74 @@
     });
   }
 
-  // PLAYER
-  const SONG_LEN = 228;
-  let playing = false, elapsed = 0, ticker = null;
+  // REAL MUSIC PLAYER
+  // Put your legal audio file near index.html and name it music.mp3
+  const audio = document.getElementById('audioPlayer');
   const vinyl = document.getElementById('vinyl');
   const fill  = document.getElementById('progFill');
   const curEl = document.getElementById('curTime');
+  const durEl = document.getElementById('durTime');
   const btnPlay = document.getElementById('btnPlay');
-  const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+  const progWrap = document.getElementById('progWrap');
 
-  function setPlay(state) {
-    playing = state;
-    btnPlay.textContent = playing ? '⏸' : '▶';
-    if (playing) { vinyl.classList.add('spinning'); ticker = setInterval(tick, 500); }
-    else { vinyl.classList.remove('spinning'); clearInterval(ticker); }
+  const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+  function resetPlayerUI() {
+    btnPlay.textContent = '▶';
+    vinyl.classList.remove('spinning');
   }
-  function tick() {
-    elapsed = Math.min(elapsed + 0.5, SONG_LEN);
-    fill.style.width = `${(elapsed / SONG_LEN) * 100}%`;
-    curEl.textContent = fmt(elapsed);
-    if (elapsed >= SONG_LEN) { elapsed = 0; setPlay(false); }
+
+  function updateProgress() {
+    if (!audio.duration || Number.isNaN(audio.duration)) return;
+    fill.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+    curEl.textContent = fmt(audio.currentTime);
+    durEl.textContent = fmt(audio.duration);
   }
-  btnPlay.addEventListener('click', () => setPlay(!playing));
-  document.getElementById('btnPrev').addEventListener('click', () => {
-    elapsed = 0; fill.style.width = '0%'; curEl.textContent = '0:00';
-    if (playing) { clearInterval(ticker); ticker = setInterval(tick, 500); }
+
+  async function togglePlay() {
+    try {
+      if (audio.paused) {
+        await audio.play();
+        btnPlay.textContent = '⏸';
+        vinyl.classList.add('spinning');
+      } else {
+        audio.pause();
+        resetPlayerUI();
+      }
+    } catch (err) {
+      alert('Добавь файл music.mp3 рядом с index.html, тогда музыка заработает.');
+      resetPlayerUI();
+    }
+  }
+
+  btnPlay.addEventListener('click', togglePlay);
+
+  audio.addEventListener('loadedmetadata', updateProgress);
+  audio.addEventListener('timeupdate', updateProgress);
+  audio.addEventListener('pause', resetPlayerUI);
+  audio.addEventListener('ended', () => {
+    audio.currentTime = 0;
+    fill.style.width = '0%';
+    curEl.textContent = '0:00';
+    resetPlayerUI();
   });
-  document.getElementById('btnNext').addEventListener('click', () => { elapsed = SONG_LEN - 1; });
-  document.getElementById('progWrap').addEventListener('click', e => {
-    const r = e.currentTarget.getBoundingClientRect();
-    elapsed = ((e.clientX - r.left) / r.width) * SONG_LEN;
-    fill.style.width = `${(elapsed / SONG_LEN) * 100}%`;
-    curEl.textContent = fmt(elapsed);
+
+  document.getElementById('btnPrev').addEventListener('click', () => {
+    audio.currentTime = 0;
+    updateProgress();
+  });
+
+  document.getElementById('btnNext').addEventListener('click', () => {
+    if (!audio.duration || Number.isNaN(audio.duration)) return;
+    audio.currentTime = Math.max(audio.duration - 5, 0);
+    updateProgress();
+  });
+
+  progWrap.addEventListener('click', e => {
+    if (!audio.duration || Number.isNaN(audio.duration)) return;
+    const r = progWrap.getBoundingClientRect();
+    audio.currentTime = ((e.clientX - r.left) / r.width) * audio.duration;
+    updateProgress();
   });
 </script>
 </body>
